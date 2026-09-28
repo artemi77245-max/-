@@ -1,0 +1,24 @@
+name: Build Orbit Windows EXE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build
+        shell: pwsh
+        run: |
+          $p = Get-ChildItem . -Recurse -File -Filter build_windows.py | Select-Object -First 1
+          if (-not $p) { throw 'Не найден build_windows.py' }
+          python -m pip install -r "$($p.Directory.FullName)\requirements.txt" pyinstaller
+          python $p.FullName
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ORBIT-Windows
+          path: '**/dist/*.exe'

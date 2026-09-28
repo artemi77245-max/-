@@ -3,22 +3,48 @@ name: Build Orbit Windows EXE
 on:
   workflow_dispatch:
 
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Build
+          architecture: x64
+
+      - name: Install dependencies and build
         shell: pwsh
         run: |
-          $p = Get-ChildItem . -Recurse -File -Filter build_windows.py | Select-Object -First 1
-          if (-not $p) { throw 'Не найден build_windows.py' }
-          python -m pip install -r "$($p.Directory.FullName)\requirements.txt" pyinstaller
-          python $p.FullName
-      - uses: actions/upload-artifact@v4
+          $buildScript = Get-ChildItem -Path . -Recurse -File -Filter build_windows.py |
+            Select-Object -First 1
+
+          if (-not $buildScript) {
+            throw "build_windows.py not found"
+          }
+
+          $projectRoot = $buildScript.Directory.FullName
+
+          python -m pip install -r (Join-Path $projectRoot "requirements.txt") pyinstaller
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python -X utf8 $buildScript.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload EXE files
+        uses: actions/upload-artifact@v4
         with:
           name: ORBIT-Windows
           path: '**/dist/*.exe'
+          if-no-files-found: error

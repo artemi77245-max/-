@@ -24,7 +24,7 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - name: Install dependencies and build
+      - name: Install and build
         shell: pwsh
         run: |
           $buildScript = Get-ChildItem -Path . -Recurse -File -Filter build_windows.py |
@@ -35,9 +35,25 @@ jobs:
           }
 
           $projectRoot = $buildScript.Directory.FullName
+          $requirements = Join-Path $projectRoot "requirements.txt"
 
-          python -m pip install -r (Join-Path $projectRoot "requirements.txt") pyinstaller
+          python -m pip install -r $requirements pyinstaller
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $source = [System.IO.File]::ReadAllText($buildScript.FullName)
+          $oldFlags = '"--onefile", "--windowed"'
+          $newFlags = '"--onefile", "--console", "--hide-console", "hide-early"'
+
+          if ($source.Contains($oldFlags)) {
+            $source = $source.Replace($oldFlags, $newFlags)
+            [System.IO.File]::WriteAllText(
+              $buildScript.FullName,
+              $source,
+              [System.Text.UTF8Encoding]::new($false)
+            )
+          } elseif (-not $source.Contains('"--hide-console"')) {
+            throw "Could not update PyInstaller window mode"
+          }
 
           python -X utf8 $buildScript.FullName
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

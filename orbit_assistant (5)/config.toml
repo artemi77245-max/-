@@ -1,0 +1,30 @@
+[ui]
+position = "TOP"
+
+[audio]
+model_path = "models/vosk-model-small-ru-0.22"
+noise_reduction = true
+voice_lock = false
+speaker_model_path = "models/vosk-model-spk-0.4"
+voiceprint_path = "voiceprint.json"
+voice_threshold = 0.38
+
+[ai]
+provider = "gemini"
+gemini_model = "gemini-2.5-flash"
+openai_model = "gpt-4.1-mini"
+
+[fish]
+model = "s2.1-pro"
+voice_id = ""
+
+[games]
+executables = ["cs2.exe", "csgo.exe", "valorant-win64-shipping.exe"]
+
+[msi]
+enabled = false
+turbo_xy = [0, 0]
+silent_xy = [0, 0]
+open_delay = 3.0
+launch_uri = ""
+window_title = "MSI Center"
